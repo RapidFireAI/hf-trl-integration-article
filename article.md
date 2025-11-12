@@ -1,10 +1,10 @@
-# Announcing RapidFire AI Official Hugging Face TRL Integration
+# Announcing RapidFire AI Integration with TRL
 
-Today is a big milestone for RapidFire AI: we’re officially integrated into Hugging Face’s TRL documentation as a first-class integration. That means TRL users can now discover, install, and run RapidFire AI as the fastest way to compare many fine-tuning/post-training configurations—without changing their workflow.
+Hugging Face TRL now officially integrates with RapidFire AI to accelerate your fine-tuning and post-training experiments. TRL users can now discover, install, and run RapidFire AI as the fastest way to compare multiple fine-tuning/post-training configurations to customize LLMs without major code changes and without bloating GPU requirements.
 
 ## Why this matters
 
-Teams don't have the time (or budget) to train one config after another. Our TRL integration lets you launch many TRL configurations concurrently—even on a single GPU—via adaptive, chunk-based scheduling. In internal benchmarks referenced in the TRL page, this delivers ~16–24× higher experimentation throughput than sequential runs, so you reach better models dramatically faster.
+When fine-tuning or post-training LLMs, teams often do not have the time and/or budget to compare multiple configs even though that can significantly boost eval metrics. RapidFire AI lets you launch multiple TRL configs concurrently--even on a single GPU--and compare them in near real time via a new adaptive, chunk-based scheduling and execution scheme. In internal benchmarks referenced in the TRL page, this delivers ~16–24× higher experimentation throughput than sequentially comparing configs one after another, enabling you to reach much better metrics much faster.
 
 ![RapidFire AI Architecture](images/rf-usage.png)
 *RapidFire AI establishes live three-way communication between your IDE, a metrics dashboard, and a multi-GPU execution backend*
@@ -13,23 +13,23 @@ Teams don't have the time (or budget) to train one config after another. Our TRL
 
 - **Drop-in TRL wrappers** — Use `RFSFTConfig`, `RFDPOConfig`, and `RFGRPOConfig` as near-zero-code replacements for TRL's SFT/DPO/GRPO configs.
 
-- **Chunk-based concurrent training** — We shard data and cycle configs at chunk boundaries to maximize GPU utilization and enable early, apples-to-apples, comparisons.
+- **Adaptive chunk-based concurrent training** — RapidFire AI shards the dataset into a given number of chunks and cycles configs at chunk boundaries to enable earlier apples-to-apples comparisons and also maximize GPU utilization.
 
-- **Interactive Control Ops (IC Ops)** — From the dashboard, Stop, Resume, Clone, and Clone & Warm-Start any run in flight to double-down on winners and pause stragglers—no job restarts required.
+- **Interactive Control Ops (IC Ops)** — From the dashboard itself, you can Stop, Resume, Delete, and Clone-Modify, possibly with Warm-Start, any runs in flight to avoid wasting resources on underperforming configs and double-down on better performing configs--no job restarts, no juggling separate GPUs or clusters, no resource bloat.
 
 ![Interactive Control Operations](images/icop-clone.png)
-*Clone promising configurations with modified hyperparameters—optionally warm-starting from the parent's weights—all from the live dashboard*
+*Clone promising configurations with modified hyperparameters, optionally warm-starting from the parent's weights, all from the live dashboard*
 
-- **Multi-GPU orchestration** — The scheduler auto-distributes configs across available GPUs; you focus on models, not plumbing.
+- **Multi-GPU orchestration** — The RapidFire AI scheduler automatically places and orchestrates configs across available GPUs on chunks of data via effcient shared memory mechanisms. You focus on your models and eval metrics, not plumbing.
 
-- **MLflow-based dashboard** — Real-time metrics, logs, and IC Ops in one place as soon as you start your experiment.
+- **MLflow-based dashboard** — Real-time metrics, logs, and IC Ops in one place as soon as you start your experiment. Support for more dashboards such as Trackio, W & B, and TensorBoard coming soon.
 
 ## How it works
 
-RapidFire AI slices your dataset into "chunks" and rotates configurations through the GPU at chunk boundaries. You get incremental signal on all configs quickly, while automatic checkpointing keeps training stable. Then, use IC Ops to adapt mid-flight—stop low-performers early and clone promising ones with tweaked hyperparameters (optionally warm-starting from the parent's weights).
+RapidFire AI splits your dataset randomly into "chunks" and cycles LLM configurations through the GPUs at chunk boundaries. You get incremental signal on eval metrics across all configs much more quickly. The automatic checkpointing via an efficient shared memory-based adapter/model spilling/loading mechanism keeps training smooth, stable, and consistent. Use IC Ops to adapt mid-flight to stop low-performers earlier and clone promising ones with tweaked config knobs, optionally warm-starting from the parent's weights.
 
 ![GPU Scheduling Comparison](images/gantt-2gpu.png)
-*Sequential vs. Task Parallel vs. RapidFire AI: Our adaptive scheduler maximizes GPU utilization across multiple configs and GPUs. The bottom row shows IC Ops in action—stopping, cloning, and modifying runs mid-flight.*
+*Sequential vs. Task Parallel vs. RapidFire AI: The adaptive scheduler maximizes GPU utilization across multiple configs and GPUs. The bottom row shows IC Ops in action—stopping, cloning, and modifying runs mid-flight.*
 
 ## Getting Started
 
@@ -57,11 +57,11 @@ The dashboard launches at `http://localhost:3000` where you can monitor and cont
 - DPO with RFDPOConfig
 - GRPO with RFGRPOConfig
 
-These are designed as drop-in replacements, so you keep your TRL mental model while gaining concurrency and control.
+These are designed as drop-in replacements so that you can keep your TRL mental model while gaining far more concurrency and control for your fine-tuning/post-training applications. 
 
 ## Minimal TRL SFT example
 
-Here's what it looks like to train **multiple configurations concurrently** on a single GPU:
+Here's what it looks like to train **multiple configurations concurrently** even on a single GPU:
 
 ```python
 from rapidfireai import Experiment
@@ -116,18 +116,18 @@ experiment.end()
 
 **What happens when you run this?**
 
-Instead of training sequentially (Config 1 → wait → Config 2 → wait), both configs train concurrently:
+Suppose you run the above on a 2-GPU machine. Instead of training sequentially (Config 1 → wait → Config 2 → wait), both configs train concurrently:
 
-| Approach | Time to Complete | GPU Utilization |
+| Approach | Time till Comparative Decision | GPU utilization |
 |----------|-----------------|-----------------|
-| Sequential (traditional) | ~20 minutes | 50% idle time |
-| RapidFire AI (concurrent) | ~2.5 minutes | 95%+ utilization |
+| Sequential (traditional) | ~15 minutes | 60% utilization |
+| RapidFire AI (concurrent) | ~5 minutes | 95%+ utilization |
 
-You get comparative results **8× faster** on the same hardware. Open `http://localhost:3000` to watch live metrics and use IC Ops to stop, clone, or tweak runs in real-time based on what you're seeing.
+You can get to a comparative decision **3× sooner** on the same resources after both configs finish processing the first data chunk instead of waiting for them to see the whole dataset one after another. Open `http://localhost:3000` to watch live metrics and use IC Ops to stop, clone, or tweak runs in real-time based on what you're seeing.
 
 ## Benchmarks: Real-World Speedups
 
-Here's what teams see when switching from sequential to RapidFire AI concurrent training:
+Here is what teams see on time to reach a comparable overall best training loss (across all tried configs) when switching from sequential comparisons to RapidFire AI-enabled hyperparallel experimentation:
 
 | Scenario | Sequential Time | RapidFire AI Time | Speedup |
 |----------|----------------|-------------------|---------|
@@ -151,7 +151,7 @@ Here's what teams see when switching from sequential to RapidFire AI concurrent 
 
 ---
 
-We built RapidFire AI because the status quo—training one config at a time—wastes both time and GPU cycles. Now that we're officially integrated into TRL's documentation, every TRL user can train smarter, iterate faster, and ship better models.
+RapidFire AI was built because the common status quo of trying one config at a time wastes both time and GPU cycles. With this official integration, every TRL user can fine-tune/post-train smarter, iterate faster, and ship better models.
 
 **Try the integration and let us know**: How much faster is your experimentation loop? What should we build next? We're just getting started, and your feedback shapes where we go from here.
 
