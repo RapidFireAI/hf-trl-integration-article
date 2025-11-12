@@ -20,13 +20,13 @@ When fine-tuning or post-training LLMs, teams often do not have the time and/or 
 ![Interactive Control Operations](images/icop-clone.png)
 *Clone promising configurations with modified hyperparameters, optionally warm-starting from the parent's weights, all from the live dashboard*
 
-- **Multi-GPU orchestration** — The RapidFire AI scheduler automatically places and orchestrates configs across available GPUs on chunks of data via effcient shared memory mechanisms. You focus on your models and eval metrics, not plumbing.
+- **Multi-GPU orchestration** — The RapidFire AI scheduler automatically places and orchestrates configs across available GPUs on chunks of data via effcient shared-memory mechanisms. You focus on your models and eval metrics, not plumbing.
 
-- **MLflow-based dashboard** — Real-time metrics, logs, and IC Ops in one place as soon as you start your experiment. Support for more dashboards such as Trackio, W & B, and TensorBoard coming soon.
+- **MLflow-based dashboard** — Real-time metrics, logs, and IC Ops in one place as soon as you start your experiment. Support for more dashboards such as Trackio, W&B, and TensorBoard coming soon.
 
 ## How it works
 
-RapidFire AI splits your dataset randomly into "chunks" and cycles LLM configurations through the GPUs at chunk boundaries. You get incremental signal on eval metrics across all configs much more quickly. The automatic checkpointing via an efficient shared memory-based adapter/model spilling/loading mechanism keeps training smooth, stable, and consistent. Use IC Ops to adapt mid-flight to stop low-performers earlier and clone promising ones with tweaked config knobs, optionally warm-starting from the parent's weights.
+RapidFire AI splits your dataset randomly into "chunks" and cycles LLM configurations through the GPUs at chunk boundaries. You get incremental signal on eval metrics across all configs much more quickly. The automatic checkpointing via an efficient shared-memory-based adapter/model spilling/loading mechanism keeps training smooth, stable, and consistent. Use IC Ops to adapt mid-flight to stop low-performers earlier and clone promising ones with tweaked config knobs, optionally warm-starting from the parent's weights.
 
 ![GPU Scheduling Comparison](images/gantt-2gpu.png)
 *Sequential vs. Task Parallel vs. RapidFire AI: The adaptive scheduler maximizes GPU utilization across multiple configs and GPUs. The bottom row shows IC Ops in action—stopping, cloning, and modifying runs mid-flight.*
