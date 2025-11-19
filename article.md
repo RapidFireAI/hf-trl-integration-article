@@ -53,9 +53,9 @@ The dashboard launches at `http://localhost:3000` where you can monitor and cont
 
 ## Supported TRL trainers
 
-- SFT with RFSFTConfig
-- DPO with RFDPOConfig
-- GRPO with RFGRPOConfig
+- SFT with `RFSFTConfig`
+- DPO with `RFDPOConfig`
+- GRPO with `RFGRPOConfig`
 
 These are designed as drop-in replacements so that you can keep your TRL mental model while gaining far more concurrency and control for your fine-tuning/post-training applications. 
 
@@ -82,13 +82,14 @@ def formatting_function(row):
         "completion": [{"role": "assistant", "content": row["response"]}]
     }
 
+dataset = dataset.map(formatting_function)
+
 # Define multiple configs to compare
 config_set = List([
     RFModelConfig(
         model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         peft_config=RFLoraConfig(r=8, lora_alpha=16, target_modules=["q_proj", "v_proj"]),
         training_args=RFSFTConfig(learning_rate=1e-3, max_steps=128, fp16=True),
-        formatting_func=formatting_function,
     ),
     RFModelConfig(
         model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
@@ -105,7 +106,7 @@ config_group = RFGridSearch(configs=config_set, trainer_type="SFT")
 def create_model(model_config):
     model = AutoModelForCausalLM.from_pretrained(
         model_config["model_name"], 
-        device_map="auto", torch_dtype="auto", use_cache=False
+        device_map="auto", torch_dtype="auto"
     )
     tokenizer = AutoTokenizer.from_pretrained(model_config["model_name"])
     return (model, tokenizer)
